@@ -1,0 +1,7 @@
+*.pickle
+/buf/
+/model/
+/log/
+/used/
+/__pycache__/
+/dataset/
