@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import chainer
 
 
+# src -> dst 名前が同じリンクをコピー
 def copy_model(src, dst):
     assert isinstance(src, chainer.Chain)
     assert isinstance(dst, chainer.Chain)
