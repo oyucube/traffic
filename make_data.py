@@ -59,8 +59,29 @@ for key in jf['types']:
 debug = False
 loss_data_count =0
 cropped_image_count = 0
+train_list = []
+for img_id in jf['imgs']:
+    img_an = jf['imgs'].get(img_id)
+    path = img_an['path']
+    img_pl_counter = 0
+    obj_p = ""
+    # if there are only one pl traffic sign ,make data
+    for img_obj in img_an['objects']:
+        obj = img_obj["category"]
+        if obj == "pl30" or obj == "pl40" or obj == "pl50" or obj == "pl60" or obj == "pl80":
+            img_pl_counter += 1
+            obj_p = img_obj
+
+    if img_pl_counter == 1 and counter_v2[obj_p["category"]] < 50:
+        img = Image.open(datadir + path)
+        if add_data(img, "test" + str(cropped_image_count), obj_p) == 1:
+            cropped_image_count += 1
+            counter_v2[obj_p["category"]] = counter_v2[obj_p["category"]] + 1
+    else:
+        train_list.append(img_id)
+cropped_image_count = 0
 for inf in range(4):
-    for img_id in jf['imgs']:
+    for img_id in train_list:
         img_an = jf['imgs'].get(img_id)
         path = img_an['path']
         img_pl_counter = 0
@@ -93,39 +114,3 @@ for key in counter:
     if counter[key] > 500:
         print("{}, {}".format(key, counter[key]))
 
-
-        # size_base = obj_p["bbox"]["xmax"] - obj_p["bbox"]["xmin"]
-        # place_base = np.array([(obj_p["bbox"]["xmax"] + obj_p["bbox"]["xmin"]) / 2,
-        #                        (obj_p["bbox"]["ymax"] + obj_p["bbox"]["ymin"]) / 2])
-        # for i in range(10000):
-        #     size_after = int(min_size * math.exp(math.log(max_size / min_size) * random.random()))
-        #     place_after = np.random.rand(2) * (256 - size_after - 32) + (16 + size_after / 2) * np.ones(2)
-        #     size_crop = 256 * size_base / size_after
-        #     place_crop = place_base - place_after * size_base / size_after
-        #     # check crop area
-        #     if place_crop[0] < 0 or place_crop[1] < 0 \
-        #             or place_crop[0] + size_crop > img.size[0] or place_crop[1] + size_crop > img.size[1]:
-        #         if i == 19:
-        #             loss_data_count += 1
-        #             print("count {} path {}".format(loss_data_count, path))
-        #             img = img.crop((int(place_crop[0]), int(place_crop[1]), int(place_crop[0] + size_crop)
-        #                             , int(place_crop[1] + size_crop)))
-        #             img = img.resize((256, 256), Image.LANCZOS)
-        #             img.save(savedir + "loss" + str(loss_data_count) + ".jpg")
-        #         continue
-        #     else:
-        #         img = img.crop((int(place_crop[0]), int(place_crop[1]), int(place_crop[0] + size_crop)
-        #                         , int(place_crop[1] + size_crop)))
-        #         img = img.resize((256, 256), Image.LANCZOS)
-        #         img.save(savedir + str(cropped_image_count) + ".jpg")
-        #         f_log.write(str(cropped_image_count) + ".jpg, " + obj_p["category"] + "\n")
-        #         f_log.write(str(obj_p) + "\n")
-        #         f_log.write("place_base" + str(place_base) + "\n")
-        #         f_log.write("size_after" + str(size_after) + "\n")
-        #         f_log.write("size_crop" + str(size_crop) + "\n")
-        #         f_log.write("place_crop" + str(place_crop) + "\n")
-        #         # label file format
-        #         # image_path, label
-        #         f_label.write(str(cropped_image_count) + ".jpg, " + obj_p["category"] + "\n")
-        #         cropped_image_count += 1
-        #         break

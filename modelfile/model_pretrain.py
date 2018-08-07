@@ -40,8 +40,7 @@ class BASE(chainer.Chain):
             norm_2_1=L.BatchNormalization(64),
             norm_2_2=L.BatchNormalization(64),
             norm_3_1=L.BatchNormalization(64),
-            norm_3_2=L.BatchNormalization(64),
-            norm_f1=L.BatchNormalization(256),
+            norm_3_2=L.BatchNormalization(64)
         )
 
         #
@@ -76,7 +75,7 @@ class BASE(chainer.Chain):
         h = F.relu(self.norm_2_2(F.max_pooling_2d(self.cnn_2_2(h), 2, stride=2)))
         h = F.relu(self.norm_3_1(self.cnn_3_1(h)))
         h = F.relu(self.norm_3_2(F.max_pooling_2d(self.cnn_3_2(h), 2, stride=2)))
-        h = F.relu(self.norm_f1(self.full_1(h)))
+        h = F.relu(self.full_2(h))
         return h
 
 

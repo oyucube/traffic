@@ -5,6 +5,7 @@ Created on Wed Nov  2 04:46:33 2016
 @author: oyu
 """
 import os
+import sys
 # os.environ["CHAINER_TYPE_CHECK"] = "0" #ここでオフに  オンにしたかったら1にするかコメントアウト
 import numpy as np
 # i = np.random()
@@ -19,6 +20,7 @@ import socket
 import gc
 from mylib.my_functions import copy_model
 from mylib.my_logger import LOGGER
+from modelfile.model_pretrain import BASE
 
 parser = argparse.ArgumentParser()
 
@@ -26,7 +28,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--am", type=str, default="model_at",
                     help="attention model")
 # data selection
-parser.add_argument("-d", "--data", type=str, default="person",
+parser.add_argument("-d", "--data", type=str, default="5class",
                     help="data")
 # hyper parameters
 parser.add_argument("-e", "--epoch", type=int, default=50,
@@ -102,10 +104,10 @@ model_2 = mf.SAF(n_out=n_target, img_size=img_size, var=train_var, n_step=num_st
 # pre
 pre_log = ""
 if len(args.pre) != 0:
-    model_cifar10 = BASE()
-    serializers.load_npz('model/' + args.pre + '.model', model_cifar10)
-    copy_model(model_cifar10, model)
-    model.r_recognize = 0.1
+    model_pretrain = BASE()
+    serializers.load_npz('model/' + args.pre + '.model', model_pretrain)
+    copy_model(model_pretrain, model)
+#     model.r_recognize = 0
     pre_log = "pre train " + args.pre
 
 # log setting

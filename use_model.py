@@ -27,12 +27,12 @@ parser = argparse.ArgumentParser()
 # load model id
 
 # * *********************************************    config    ***************************************************** * #
-parser.add_argument("-a", "--am", type=str, default="model_gray",
+parser.add_argument("-a", "--am", type=str, default="model_at",
                     help="attention model")
 # data selection
-parser.add_argument("-d", "--data", type=str, default="5class_gray",
+parser.add_argument("-d", "--data", type=str, default="5class",
                     help="data")
-parser.add_argument("-l", "--l", type=str, default="gray",
+parser.add_argument("-l", "--l", type=str, default="100_batch",
                     help="load model name")
 test_b = 100
 num_step = 1
@@ -133,8 +133,8 @@ if gpu_id >= 0:
 
 perm = np.random.permutation(test_max)
 with chainer.function.no_backprop_mode(), chainer.using_config('train', False):
-#     x, t = get_batch(val_data, perm[0:test_b], 1)
-    x, t = get_batch_mnist(val_data, perm[0:test_b], 1, image_size=256)
+    x, t = get_batch(val_data, perm[0:test_b], 1)
+#     x, t = get_batch_mnist(val_data, perm[0:test_b], 1, image_size=256)
 
     acc, l_list, s_list = model.use_model(x, t)
 

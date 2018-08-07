@@ -15,7 +15,6 @@ from chainer import cuda, serializers
 from tqdm import tqdm
 import datetime
 import importlib
-import image_dataset
 import socket
 import gc
 from mylib.my_functions import get_batch
@@ -29,7 +28,7 @@ parser.add_argument("-a", "--am", type=str, default="model_pretrain",
 # hyper parameters
 parser.add_argument("-e", "--epoch", type=int, default=30,
                     help="iterate training given epoch times")
-parser.add_argument("-b", "--batch_size", type=int, default=128,
+parser.add_argument("-b", "--batch_size", type=int, default=20,
                     help="batch size")
 parser.add_argument("-g", "--gpu", type=int, default=-1,
                     help="use gpu")
@@ -57,7 +56,7 @@ else:
     log_dir = "log/"
 # load data
 data_dir = data_dir + "pretrain/"
-dl = importlib.import_module("dataset." + args.data)
+dl = importlib.import_module("dataset." + "pretrain")
 train_data = dl.MyDataset(data_dir, "train")
 val_data = dl.MyDataset(data_dir, "test")
 
