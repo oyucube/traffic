@@ -3,8 +3,8 @@ import numpy as np
 
 # acc_list = ["normal_train", "normal_test", "pretraintrain", "pretraintest", "pretrain_fix_train", "pretrain_fix_test"
 #     , "2_step_train", "2_step_test", "VGG_train", "VGG_test"]
-acc_list = ["normal_train", "half_train", "gray_train"]
-line_color = ["blue", "purple", "green"]
+acc_list = ["100b_train", "100b_test", "pretrain_train", "pretrain_test"]
+line_color = ["blue", "blue", "green", "green"]
 
 # line_color = ["red", "red", "blue", "blue", "green", "green", "purple", "purple", "gold", "gold"]
 
@@ -15,7 +15,7 @@ plt.xlim([0, 50])
 for item, lc in zip(acc_list, line_color):
     acc = np.load("graph/" + item + ".npy")
     if item.find("test") != -1:
-        plt.plot(acc, label=item, color=lc, marker=".")
+        plt.plot(acc, label=item, color=lc, marker=".", alpha=0.5)
     else:
         plt.plot(acc, label=item, color=lc)
 plt.xlabel("epoch")

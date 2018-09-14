@@ -161,8 +161,8 @@ class BASE(chainer.Chain):
             if i + 1 == n_step:
                 xm, lm, sm = self.make_img(x, l, s, num_lm, random=0)
                 l1, s1, y, b = self.recurrent_forward(xm, lm, sm)
-                s_list[i] = s1.data
-                l_list[i] = l1.data
+                s_list[i] = sm.data
+                l_list[i] = lm.data
                 accuracy = y.data * t
                 s_list = xp.power(10, s_list - 1)
                 return xp.sum(accuracy, axis=1), l_list, s_list
@@ -252,11 +252,25 @@ class BASE(chainer.Chain):
         num_lm = x.data.shape[0]
         s1 = xp.power(10, s1 - 1)
         self.first_forward(x, num_lm)
-        xm, lm, sm = self.make_img(x, Variable(l2), Variable(s2), num_lm, random=0)
-        l1, s1, y, b = self.recurrent_forward(xm, l1, s1)
+        xm, lm, sm = self.make_img(x, Variable(l1), Variable(s1), num_lm, random=0)
+        l1, s1, y, b = self.recurrent_forward(xm, lm, sm)
         accuracy = y.data * t.data
         return xp.sum(accuracy)
 
+    # def s2_determin(self, x, t, l2, s2):
+    #     self.reset()
+    #     n_step = self.n_step
+    #     num_lm = x.data.shape[0]
+    #
+    #     l, s, b1 = self.first_forward(x, num_lm)
+    #     xm, lm, sm = self.make_img(x, l, s, num_lm, random=0)
+    #     l1, s1, y, b = self.recurrent_forward(xm, lm, sm)
+    #     # 画像作成の場所を指定
+    #     s2 = xp.power(10, s2 - 1)
+    #     xm, lm, sm = self.make_img(x, Variable(l2), Variable(s2), num_lm, random=0)
+    #     l1, s1, y, b = self.recurrent_forward(xm, lm, sm)
+    #     accuracy = y.data * t.data
+    #     return xp.sum(accuracy)
 
 class SAF(BASE):
     pass

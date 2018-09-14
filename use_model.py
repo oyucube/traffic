@@ -76,10 +76,15 @@ else:
     data_dir = "C:/Users/waka-lab/Documents/data/data/"
     log_dir = "log/"
 # load data
-data_dir = data_dir + "newdata/"
+if args.data == "5class":
+    data_dir = data_dir + "newdata/"
+else:
+    data_dir = data_dir + "origin/"
 dl = importlib.import_module("dataset." + args.data)
+# train_data = dl.MyDataset(data_dir, "train")
+# val_data = dl.MyDataset(data_dir, "test")
 train_data = dl.MyDataset(data_dir, "train")
-val_data = dl.MyDataset(data_dir, "test")
+val_data = dl.MyDataset(data_dir, "train")
 
 
 xp = cuda.cupy if gpu_id >= 0 else np

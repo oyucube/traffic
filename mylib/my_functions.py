@@ -110,15 +110,32 @@ def draw_attention(d_img, d_l_list, d_s_list, index, save="", acc=""):
         # print(l)
         p1 = (size * (l - s / 2))
         p2 = (size * (l + s / 2))
-        p1[0] = size - p1[0]
-        p2[0] = size - p2[0]
-        # print([p1[0], p1[1], p2[0], p2[1]])
         draw.rectangle([p1[1], p1[0], p2[1], p2[0]], outline=color_list[j])
     if len(acc) > 0:
         font = ImageFont.truetype("C:\\Windows\\Fonts\\msgothic.ttc", 20)
         draw.text([120, 230], acc, font=font, fill="red")
     if len(save) > 0:
         d_img.save(save + ".png")
+
+# def draw_attention(d_img, d_l_list, d_s_list, index, save="", acc=""):
+#     draw = ImageDraw.Draw(d_img)
+#     color_list = ["red", "yellow", "blue", "green"]
+#     size = 256
+#     for j in range(d_l_list.shape[0]):
+#         l = d_l_list[j][index]
+#         s = d_s_list[j][index]
+#         # print(l)
+#         p1 = (size * (l - s / 2))
+#         p2 = (size * (l + s / 2))
+#         p1[0] = size - p1[0]
+#         p2[0] = size - p2[0]
+#         # print([p1[0], p1[1], p2[0], p2[1]])
+#         draw.rectangle([p1[1], p1[0], p2[1], p2[0]], outline=color_list[j])
+#     if len(acc) > 0:
+#         font = ImageFont.truetype("C:\\Windows\\Fonts\\msgothic.ttc", 20)
+#         draw.text([120, 230], acc, font=font, fill="red")
+#     if len(save) > 0:
+#         d_img.save(save + ".png")
 
 
 def draw_attention_mnist(d_img, d_l_list, d_s_list, index, save="", acc=""):
