@@ -82,9 +82,10 @@ else:
 # load data
 if args.data == "5class":
     data_dir = data_dir + "newdata/"
-else:
+elif args.data == "art":
     data_dir = data_dir + "origin/"
-
+else:
+    data_dir = data_dir + "origin2/"
 dl = importlib.import_module("dataset." + args.data)
 train_data = dl.MyDataset(data_dir, "train")
 val_data = dl.MyDataset(data_dir, "test")
@@ -124,9 +125,9 @@ logger = LOGGER(log_dir, file_id, n_epoch=n_epoch)
 logger.l_print("{} class recognition\nclass:{} use {}".format(num_class, target_c, dl.data_name))
 logger.l_print("model:{} {}".format(model_file_name, pre_log))
 logger.l_print("parameter\n")
-logger.l_print("step:{} sample:{} batch_size:{} var:{} crop:{}".format(num_step, num_lm, train_b, train_var, crop))
-logger.l_print("log dir:{}".format(log_dir))
-logger.l_print("going to train {} epoch".format(n_epoch))
+logger.l_print("step:{} sample:{} batch_size:{} var:{} crop:{}\n".format(num_step, num_lm, train_b, train_var, crop))
+logger.l_print("log dir:{}\n".format(log_dir))
+logger.l_print("going to train {} epoch\n".format(n_epoch))
 
 # model load
 if len(args.l) != 0:

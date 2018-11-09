@@ -30,9 +30,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--am", type=str, default="model_at",
                     help="attention model")
 # data selection
-parser.add_argument("-d", "--data", type=str, default="5class",
+parser.add_argument("-d", "--data", type=str, default="art2",
                     help="data")
-parser.add_argument("-l", "--l", type=str, default="100_batch",
+parser.add_argument("-l", "--l", type=str, default="art2",
                     help="load model name")
 test_b = 100
 num_step = 1
@@ -76,10 +76,13 @@ else:
     data_dir = "C:/Users/waka-lab/Documents/data/data/"
     log_dir = "log/"
 # load data
+# load data
 if args.data == "5class":
     data_dir = data_dir + "newdata/"
-else:
+elif args.data == "art":
     data_dir = data_dir + "origin/"
+else:
+    data_dir = data_dir + "origin2/"
 dl = importlib.import_module("dataset." + args.data)
 # train_data = dl.MyDataset(data_dir, "train")
 # val_data = dl.MyDataset(data_dir, "test")

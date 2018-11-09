@@ -3,7 +3,7 @@ import numpy as np
 
 # acc_list = ["normal_train", "normal_test", "pretraintrain", "pretraintest", "pretrain_fix_train", "pretrain_fix_test"
 #     , "2_step_train", "2_step_test", "VGG_train", "VGG_test"]
-acc_list = ["100b_train", "100b_test", "pretrain_train", "pretrain_test"]
+acc_list = ["try1_train", "try1_test", "try2_train", "try2_test"]
 line_color = ["blue", "blue", "green", "green"]
 
 # line_color = ["red", "red", "blue", "blue", "green", "green", "purple", "purple", "gold", "gold"]
