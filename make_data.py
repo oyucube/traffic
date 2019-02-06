@@ -44,19 +44,26 @@ json_fp = open('annotations.json')
 jf = json.loads(json_fp.read())
 
 # output dir
-savedir = datadir + "newdata/"
+savedir = datadir + "difdata/"
 f_log = open(savedir + 'log.txt', 'w')
 f_label = open(savedir + 'label.txt', 'w')
+############
 # config
-min_size = 64
+############
+# newdata
+# min_size = 64
+# max_size = 128
+
+min_size = 28
 max_size = 128
+# if debug is true , stop making data at 100
+debug = True
 
 counter_v2 = {"pl30": 0, "pl40": 0, "pl50": 0, "pl60": 0, "pl80": 0, "pl100": 0}
 counter = {"sum": 0}
 for key in jf['types']:
     counter[key] = 0
-# if debug is true , stop making data at 100
-debug = False
+
 loss_data_count =0
 cropped_image_count = 0
 train_list = []

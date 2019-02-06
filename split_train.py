@@ -28,7 +28,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--am", type=str, default="model_at",
                     help="attention model")
 # data selection
-parser.add_argument("-d", "--data", type=str, default="5class",
+parser.add_argument("-d", "--data", type=str, default="m5class",
                     help="data")
 # hyper parameters
 parser.add_argument("-e", "--epoch", type=int, default=50,
@@ -41,6 +41,8 @@ parser.add_argument("-s", "--step", type=int, default=2,
                     help="look step")
 parser.add_argument("-v", "--var", type=float, default=0.02,
                     help="sample variation")
+parser.add_argument("-w", "--wvar", type=float, default=0.03,
+                    help="size variation")
 parser.add_argument("-g", "--gpu", type=int, default=-1,
                     help="use gpu")
 # load model id
@@ -53,7 +55,7 @@ parser.add_argument("-q", "--logmode", type=int, default=1,
                     help="log mode")
 parser.add_argument("-p", "--pre", type=str, default="",
                     help="pre train")
-parser.add_argument("-n", "--ns", type=int, default=10,
+parser.add_argument("-n", "--ns", type=int, default=50,
                     help="number of split ")
 args = parser.parse_args()
 
@@ -64,6 +66,7 @@ n_epoch = args.epoch
 num_step = args.step
 train_b = args.batch_size
 train_var = args.var
+w_var = args.wvar
 gpu_id = args.gpu
 batch_split = args.ns
 crop = 1
@@ -80,12 +83,6 @@ else:
     data_dir = "C:/Users/waka-lab/Documents/data/data/"
     log_dir = "log/"
 # load data
-if args.data == "5class":
-    data_dir = data_dir + "newdata/"
-elif args.data == "art":
-    data_dir = data_dir + "origin/"
-else:
-    data_dir = data_dir + "origin2/"
 dl = importlib.import_module("dataset." + args.data)
 train_data = dl.MyDataset(data_dir, "train")
 val_data = dl.MyDataset(data_dir, "test")
@@ -118,14 +115,15 @@ if len(args.pre) != 0:
 # log setting
 if file_id == "":
     file_id = datetime.datetime.now().strftime("%m%d%H%M%S")
-log_dir = log_dir + file_id + "/"
+log_dir = log_dir + args.data + "/" + file_id + "/"
 os.mkdir(log_dir)
 logger = LOGGER(log_dir, file_id, n_epoch=n_epoch)
 
 logger.l_print("{} class recognition\nclass:{} use {}".format(num_class, target_c, dl.data_name))
 logger.l_print("model:{} {}".format(model_file_name, pre_log))
 logger.l_print("parameter\n")
-logger.l_print("step:{} sample:{} batch_size:{} var:{} crop:{}\n".format(num_step, num_lm, train_b, train_var, crop))
+logger.l_print("step:{} sample:{} batch_size:{} var:{} s_var:{}  crop:{}\n"
+               .format(num_step, num_lm, train_b, train_var, w_var, crop))
 logger.l_print("log dir:{}\n".format(log_dir))
 logger.l_print("going to train {} epoch\n".format(n_epoch))
 

@@ -16,9 +16,10 @@ import chainer
 from chainer import cuda, serializers
 import importlib
 import socket
-from mylib.my_functions import get_batch, draw_attention, get_batch_mnist
+from mylib.my_functions import get_batch, draw_attention, get_batch_mnist, draw_attention_xm
 import matplotlib
 import importlib
+import os
 matplotlib.use('Agg')
 
 
@@ -27,16 +28,16 @@ parser = argparse.ArgumentParser()
 # load model id
 
 # * *********************************************    config    ***************************************************** * #
-parser.add_argument("-a", "--am", type=str, default="model_at",
+parser.add_argument("-a", "--am", type=str, default="model_at24",
                     help="attention model")
 # data selection
-parser.add_argument("-d", "--data", type=str, default="art2",
+parser.add_argument("-d", "--data", type=str, default="m5class",
                     help="data")
-parser.add_argument("-l", "--l", type=str, default="art2",
+parser.add_argument("-l", "--l", type=str, default="best_normal_try1",
                     help="load model name")
 test_b = 100
 num_step = 1
-
+out_dir_name = "no_acc"
 # * **************************************************************************************************************** * #
 
 # hyper parameters
@@ -77,12 +78,21 @@ else:
     log_dir = "log/"
 # load data
 # load data
-if args.data == "5class":
+if args.data == "5class" or args.data == "m5class":
     data_dir = data_dir + "newdata/"
 elif args.data == "art":
     data_dir = data_dir + "origin/"
+elif args.data == "art3":
+    data_dir = data_dir + "origin4/"
+elif args.data == "difd":
+    data_dir = data_dir + "difdata/"
+elif args.data == "multsign":
+    data_dir = data_dir + "multsign/"
+elif args.data == "easymult":
+    data_dir = data_dir + "easymult/"
 else:
-    data_dir = data_dir + "origin2/"
+    print("unknown dataset")
+    exit()
 dl = importlib.import_module("dataset." + args.data)
 # train_data = dl.MyDataset(data_dir, "train")
 # val_data = dl.MyDataset(data_dir, "test")
@@ -144,7 +154,7 @@ with chainer.function.no_backprop_mode(), chainer.using_config('train', False):
     x, t = get_batch(val_data, perm[0:test_b], 1)
 #     x, t = get_batch_mnist(val_data, perm[0:test_b], 1, image_size=256)
 
-    acc, l_list, s_list = model.use_model(x, t)
+    acc, l_list, s_list, x_list = model.use_model(x, t)
 
 # print("acc")
 # print(acc)
@@ -152,16 +162,20 @@ with chainer.function.no_backprop_mode(), chainer.using_config('train', False):
 # print(l_list)
 print("s_list")
 # print(s_list)
+os.makedirs("buf/" + out_dir_name)
+save_dir = "buf/" + out_dir_name + "/attention"
 for i in range(test_b):
-    save_filename = "buf/attention" + str(i)
+    save_filename = save_dir + str(i)
     # print(acc[i])
     img = val_data.get_image(perm[i])
     acc_str = ("{:1.8f}".format(acc[i]))
+    acc_str = ""
     # print(acc_str)
     # print(l_list[0][i])
     # print(l_list[1][i])
     # print(s_list[0][i])
-    draw_attention(img, l_list, s_list, i, save=save_filename, acc=acc_str)
+    # draw_attention(img, l_list, s_list, i, save=save_filename, acc=acc_str)
+    draw_attention_xm(img, l_list, s_list, x_list, i, save=save_filename, acc=acc_str)
 
 #    draw_attention(img, l_list, s_list, i, save=save_filename, acc=acc_str[0:6])
 print("average of acc")

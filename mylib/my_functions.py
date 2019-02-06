@@ -117,6 +117,34 @@ def draw_attention(d_img, d_l_list, d_s_list, index, save="", acc=""):
     if len(save) > 0:
         d_img.save(save + ".png")
 
+
+def draw_attention_xm(d_img, d_l_list, d_s_list, d_x_list, index, save="", acc=""):
+    white_img = 255 * np.ones((256, 368, 3))
+    base_img = Image.fromarray(np.uint8(white_img))
+    draw = ImageDraw.Draw(d_img)
+    color_list = ["red", "yellow", "blue", "green"]
+    size = 256
+    for j in range(d_l_list.shape[0]):
+        l = d_l_list[j][index]
+        s = d_s_list[j][index]
+        # print(l)
+        p1 = (size * (l - s / 2))
+        p2 = (size * (l + s / 2))
+        draw.rectangle([p1[1], p1[0], p2[1], p2[0]], outline=color_list[j])
+    if len(acc) > 0:
+        font = ImageFont.truetype("C:\\Windows\\Fonts\\msgothic.ttc", 20)
+        draw.text([120, 230], acc, font=font, fill="red")
+    base_img.paste(d_img)
+    for k in range(d_l_list.shape[0]):
+        x = 255 * d_x_list[k][index]
+        x = x.transpose(1, 2, 0)
+        x = Image.fromarray(np.uint8(x))
+        x = x.resize((96, 96))
+        base_img.paste(x, (272, k * 96))
+    if len(save) > 0:
+        base_img.save(save + ".png")
+    return base_img
+
 # def draw_attention(d_img, d_l_list, d_s_list, index, save="", acc=""):
 #     draw = ImageDraw.Draw(d_img)
 #     color_list = ["red", "yellow", "blue", "green"]

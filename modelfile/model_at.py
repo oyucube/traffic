@@ -16,7 +16,7 @@ from env import xp
 
 
 class BASE(chainer.Chain):
-    def __init__(self, n_units=256, n_out=0, img_size=112, var=0.18, n_step=2, gpu_id=-1):
+    def __init__(self, n_units=256, n_out=0, img_size=112, var=0.18, wvar=0, n_step=2, gpu_id=-1):
         super(BASE, self).__init__(
             # the size of the inputs to each layer will be inferred
             # glimpse network
@@ -85,13 +85,17 @@ class BASE(chainer.Chain):
         self.gsize = 32
         self.train = True
         self.var = var
-        self.vars = var
+        if wvar == 0:
+            self.vars = var
+        else:
+            self.vars = wvar
         self.n_unit = n_units
         self.num_class = n_out
         # r determine the rate of position
         self.r = 0.5
         self.r_recognize = 1.0
         self.n_step = n_step
+        self.b_log = 0
 
     def reset(self):
         self.rnn_1.reset_state()
@@ -156,6 +160,7 @@ class BASE(chainer.Chain):
         n_step = self.n_step
         s_list = xp.empty((n_step, num_lm, 1))
         l_list = xp.empty((n_step, num_lm, 2))
+        x_list = xp.empty((n_step, num_lm, 3, self.gsize, self.gsize))
         l, s, b1 = self.first_forward(x, num_lm)
         for i in range(n_step):
             if i + 1 == n_step:
@@ -163,16 +168,18 @@ class BASE(chainer.Chain):
                 l1, s1, y, b = self.recurrent_forward(xm, lm, sm)
                 s_list[i] = sm.data
                 l_list[i] = lm.data
+                x_list[i] = xm.data
                 accuracy = y.data * t
                 s_list = xp.power(10, s_list - 1)
-                return xp.sum(accuracy, axis=1), l_list, s_list
+                return xp.sum(accuracy, axis=1), l_list, s_list, x_list
             else:
                 xm, lm, sm = self.make_img(x, l, s, num_lm, random=0)
                 l1, s1, y, b = self.recurrent_forward(xm, lm, sm)
             l = l1
             s = s1
-            s_list[i] = s.data
-            l_list[i] = l.data
+            s_list[i] = sm.data
+            l_list[i] = lm.data
+            x_list[i] = xm.data
         return
 
     def first_forward(self, x, num_lm):
@@ -250,27 +257,26 @@ class BASE(chainer.Chain):
     def s1_determin(self, x, t, l1, s1):
         self.reset()
         num_lm = x.data.shape[0]
-        s1 = xp.power(10, s1 - 1)
+        s1 = xp.log10(s1 + 0.001) + 1
         self.first_forward(x, num_lm)
         xm, lm, sm = self.make_img(x, Variable(l1), Variable(s1), num_lm, random=0)
         l1, s1, y, b = self.recurrent_forward(xm, lm, sm)
         accuracy = y.data * t.data
         return xp.sum(accuracy)
 
-    # def s2_determin(self, x, t, l2, s2):
-    #     self.reset()
-    #     n_step = self.n_step
-    #     num_lm = x.data.shape[0]
-    #
-    #     l, s, b1 = self.first_forward(x, num_lm)
-    #     xm, lm, sm = self.make_img(x, l, s, num_lm, random=0)
-    #     l1, s1, y, b = self.recurrent_forward(xm, lm, sm)
-    #     # 画像作成の場所を指定
-    #     s2 = xp.power(10, s2 - 1)
-    #     xm, lm, sm = self.make_img(x, Variable(l2), Variable(s2), num_lm, random=0)
-    #     l1, s1, y, b = self.recurrent_forward(xm, lm, sm)
-    #     accuracy = y.data * t.data
-    #     return xp.sum(accuracy)
+    def s2_determin(self, x, t, l_list, s_list):
+        self.reset()
+        num_lm = x.data.shape[0]
+        s_list = xp.log10(s_list + 0.001) + 1
+        self.first_forward(x, num_lm)
+        xm, lm, sm = self.make_img(x, Variable(l_list[0]), Variable(s_list[0]), num_lm, random=0)
+        self.recurrent_forward(xm, lm, sm)
+        xm, lm, sm = self.make_img(x, Variable(l_list[1]), Variable(s_list[1]), num_lm, random=0)
+        l1, s1, y, b = self.recurrent_forward(xm, lm, sm)
+        accuracy = y.data * t.data
+        class_l = xp.argmax(y.data, axis=1)
+        return xp.sum(accuracy), class_l
+
 
 class SAF(BASE):
     pass

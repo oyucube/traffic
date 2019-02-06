@@ -19,11 +19,13 @@ import socket
 import gc
 from mylib.my_functions import get_batch
 from mylib.my_logger import LOGGER
+from mylib.my_functions import copy_model
+from modelfile.model_at24 import SAF
 
 parser = argparse.ArgumentParser()
 
 # model selection
-parser.add_argument("-a", "--am", type=str, default="model_pretrain",
+parser.add_argument("-a", "--am", type=str, default="model_pretrain24",
                     help="attention model")
 # hyper parameters
 parser.add_argument("-e", "--epoch", type=int, default=30,
@@ -36,8 +38,8 @@ parser.add_argument("-g", "--gpu", type=int, default=-1,
 # log config
 parser.add_argument("-o", "--filename", type=str, default="",
                     help="prefix of output file names")
-parser.add_argument("-p", "--logmode", type=int, default=1,
-                    help="log mode")
+parser.add_argument("-p", "--pre", type=str, default="",
+                    help="pre train")
 args = parser.parse_args()
 
 file_id = args.filename
@@ -49,14 +51,16 @@ crop = 1
 # naruto ならGPUモード
 if socket.gethostname() == "chainer":
     gpu_id = 0
-    log_dir = "/home/y-murata/storage/traffic/"
+    log_dir = "/home/y-murata/storage/traffic/pretrain/"
     data_dir = "/home/y-murata/traffic/data/"
 else:
     data_dir = "C:/Users/waka-lab/Documents/data/data/"
     log_dir = "log/"
 # load data
-data_dir = data_dir + "pretrain/"
-dl = importlib.import_module("dataset." + "pretrain")
+data_dir = data_dir + "pretrain24_sp/"
+# data_dir = data_dir + "pretrain_24/"
+
+dl = importlib.import_module("dataset." + "pretrain24")
 train_data = dl.MyDataset(data_dir, "train")
 val_data = dl.MyDataset(data_dir, "test")
 
@@ -69,7 +73,7 @@ num_val_loop = 10  # val loop 10 times
 
 img_size = 32
 n_target = 10
-num_class = 10
+num_class = 5
 target_c = ""
 # test_b = test_max
 
@@ -79,6 +83,10 @@ model_file_name = args.am
 sss = importlib.import_module("modelfile." + model_file_name)
 model = sss.BASE()
 
+if len(args.pre) != 0:
+    model_pretrain = SAF(n_out=5)
+    serializers.load_npz('model/' + args.pre + '.model', model_pretrain)
+    copy_model(model_pretrain, model)
 
 # オプティマイザの設定
 optimizer = chainer.optimizers.Adam()

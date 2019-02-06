@@ -12,12 +12,12 @@ def add_data(img_o, out_id, obj_pp):
     if size < obj_pp["bbox"]["xmax"] - obj_pp["bbox"]["xmin"]:
         size = obj_pp["bbox"]["xmax"] - obj_pp["bbox"]["xmin"]
     place_crop = np.array([obj_pp["bbox"]["xmin"], obj_pp["bbox"]["ymin"]])
-    size_after = 32
+    size_after = 24
 
     # check crop area
     img_o = img_o.crop((int(place_crop[0]), int(place_crop[1]), int(place_crop[0] + size)
                         , int(place_crop[1] + size)))
-    img_o = img_o.resize((32, 32), Image.LANCZOS)
+    img_o = img_o.resize((24, 24), Image.LANCZOS)
     img_o.save(savedir + out_id + ".jpg")
     f_log.write(out_id + ".jpg, " + obj_pp["category"] + "\n")
     f_log.write(str(obj_pp) + "\n")
@@ -37,7 +37,7 @@ json_fp = open('annotations.json')
 jf = json.loads(json_fp.read())
 
 # output dir
-savedir = datadir + "pretrain/"
+savedir = datadir + "pretrain_24/"
 f_log = open(savedir + 'log.txt', 'w')
 f_label = open(savedir + 'label.txt', 'w')
 # config

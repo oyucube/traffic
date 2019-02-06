@@ -6,13 +6,14 @@ Created on Wed Oct 26 04:46:24 2016
 """
 import chainer.functions as F
 from chainer import Variable
+import chainer.links as L
 from env import xp
 from modelfile.model_at import BASE
 import math
 
 
-class SAF(BASE):
-    def __init__(self, n_units=256, n_out=0, img_size=112, var=0.18, n_step=2, gpu_id=-1):
+class BASE24(BASE):
+    def __init__(self, n_units=256, n_out=0, img_size=112, var=0.18, wvar=0, n_step=2, gpu_id=-1):
         super(BASE, self).__init__(
             # the size of the inputs to each layer will be inferred
             # glimpse network
@@ -78,13 +79,20 @@ class SAF(BASE):
         else:
             self.use_gpu = False
         self.img_size = img_size
-        self.gsize = 20
+        self.gsize = 24
         self.train = True
         self.var = var
-        self.vars = var
+        if wvar == 0:
+            self.vars = var
+        else:
+            self.vars = wvar
         self.n_unit = n_units
         self.num_class = n_out
         # r determine the rate of position
         self.r = 0.5
         self.r_recognize = 1.0
         self.n_step = n_step
+
+
+class SAF(BASE24):
+    pass

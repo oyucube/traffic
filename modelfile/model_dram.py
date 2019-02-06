@@ -70,12 +70,16 @@ class BASE(chainer.Chain):
         self.r = 0.5
         self.r_recognize = 1.0
         self.n_step = n_step
+        self.b_log = 0
+
+    def set_b(self):
+        self.b_log = 0
 
     def reset(self):
         self.rnn_1.reset_state()
         self.rnn_2.reset_state()
 
-    def __call__(self, x, target):
+    def __call__(self, x, target, bf=False):
         self.reset()
         n_step = self.n_step
         num_lm = x.shape[0]
@@ -110,6 +114,8 @@ class BASE(chainer.Chain):
             l, b1 = self.first_forward(x, num_lm)
             for i in range(n_step):
                 if i + 1 == n_step:
+                    if bf:
+                        self.b_log += xp.sum(b1.data)
                     xm, lm = self.make_img(x, l, num_lm, random=0)
                     l1, y, b = self.recurrent_forward(xm, lm)
                     accuracy = xp.sum(y.data * target)
@@ -120,6 +126,7 @@ class BASE(chainer.Chain):
                     xm, lm = self.make_img(x, l, num_lm, random=0)
                     l1, y, b = self.recurrent_forward(xm, lm)
                 l = l1
+                b1 = b
 
     def use_model(self, x, t):
         self.reset()

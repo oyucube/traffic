@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Nov  2 04:46:33 2016
-
 @author: oyu
 """
 import os
@@ -69,13 +68,13 @@ parser = argparse.ArgumentParser()
 # load model id
 
 # * *********************************************    config    ***************************************************** * #
-parser.add_argument("-a", "--am", type=str, default="model_at",
+parser.add_argument("-a", "--am", type=str, default="model_at24",
                     help="attention model")
-parser.add_argument("-l", "--l", type=str, default="art_test",
+parser.add_argument("-l", "--l", type=str, default="best_p24_06try2_B",
                     help="load model name")
-parser.add_argument("-d", "--data", type=str, default="art",
+parser.add_argument("-d", "--data", type=str, default="m5class",
                     help="data")
-test_b = 10
+test_b = 1
 num_step = 1
 
 # * **************************************************************************************************************** * #
@@ -121,7 +120,7 @@ else:
     data_dir = "C:/Users/waka-lab/Documents/data/data/"
     log_dir = "log/"
 # load data
-if args.data == "5class":
+if args.data == "5class" or args.data == "m5class":
     data_dir = data_dir + "newdata/"
 else:
     data_dir = data_dir + "origin/"
@@ -163,30 +162,30 @@ det = 10
 a_size = 0.3
 space1 = xp.zeros((sample, det, det))
 space2 = xp.zeros((sample, det, det))
-# for s in tqdm(range(sample)):
-#     for i in range(det):
-#         for j in range(det):
-#             l2 = xp.array([[i / det, j / det]]).astype("float32")
-#             s2 = xp.array([[a_size]]).astype("float32")
-#             with chainer.function.no_backprop_mode(), chainer.using_config('train', False):
-#                 x, t = get_batch(val_data, xp.array([nd[s]]), 1)
-#                 space1[s][i][j] = model.s1_determin(x, t, l2, s2)
-# a_size = 0.5
-# for s in tqdm(range(sample)):
-#     for i in range(det):
-#         for j in range(det):
-#             l2 = xp.array([[i / det, j / det]]).astype("float32")
-#             s2 = xp.array([[a_size]]).astype("float32")
-#             with chainer.function.no_backprop_mode(), chainer.using_config('train', False):
-#                 x, t = get_batch(val_data, xp.array([nd[s]]), 1)
-#                 space2[s][i][j] = model.s1_determin(x, t, l2, s2)
+for s in tqdm(range(sample)):
+    for i in range(det):
+        for j in range(det):
+            l2 = xp.array([[i / det, j / det]]).astype("float32")
+            s2 = xp.array([[a_size]]).astype("float32")
+            with chainer.function.no_backprop_mode(), chainer.using_config('train', False):
+                x, t = get_batch(val_data, xp.array([nd[s]]), 1)
+                space1[s][i][j] = model.s1_determin(x, t, l2, s2)
+a_size = 0.5
+for s in tqdm(range(sample)):
+    for i in range(det):
+        for j in range(det):
+            l2 = xp.array([[i / det, j / det]]).astype("float32")
+            s2 = xp.array([[a_size]]).astype("float32")
+            with chainer.function.no_backprop_mode(), chainer.using_config('train', False):
+                x, t = get_batch(val_data, xp.array([nd[s]]), 1)
+                space2[s][i][j] = model.s1_determin(x, t, l2, s2)
 
 
 
 # 描画
 with chainer.function.no_backprop_mode(), chainer.using_config('train', False):
     x, t = get_batch(val_data, nd[0:sample], 1)
-    acc, l_list, s_list = model.use_model(x, t)
+    acc, l_list, s_list, x_list = model.use_model(x, t)
 print(acc)
 
 for i in range(sample):
@@ -236,4 +235,3 @@ for i in range(sample):
 #                              x
 #      y軸を反転
 #
-
