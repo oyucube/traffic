@@ -124,7 +124,6 @@ class BASEM(BASE):
         num_lm = x.shape[0]
         loss_func = 0
         if chainer.config.train:
-            r_buf = 0
             l, s, b = self.first_forward(x, num_lm)
             for i in range(n_step):
                 if i + 1 == n_step:
@@ -145,7 +144,7 @@ class BASEM(BASE):
                     xm, lm, sm = self.make_img(x, l, s, num_lm, random=1)
                     l1, s1, y, b1 = self.recurrent_forward(xm, lm, sm)
                     loss, size_p = self.cul_loss(y, target, l, s, lm, sm)
-                    loss_func += loss
+                    loss_func += self.r_recognize * loss
                     r = xp.where(
                         xp.argmax(y.data, axis=1) == xp.argmax(target, axis=1), 1, 0).reshape((num_lm, 1)).astype(
                         xp.float32)
@@ -155,24 +154,6 @@ class BASEM(BASE):
                 l = l1
                 s = s1
                 b = b1
-
-        else:
-            l, s, b1 = self.first_forward(x, num_lm)
-            for i in range(n_step):
-                if i + 1 == n_step:
-                    if bf:
-                        self.b_log += xp.sum(b1.data)
-                    xm, lm, sm = self.make_img(x, l, s, num_lm, random=0)
-                    l1, s1, y, b = self.recurrent_forward(xm, lm, sm)
-                    accuracy = xp.sum(y.data * target)
-                    if self.use_gpu:
-                        accuracy = chainer.cuda.to_cpu(accuracy)
-                    return accuracy
-                else:
-                    xm, lm, sm = self.make_img(x, l, s, num_lm, random=0)
-                    l1, s1, y, b = self.recurrent_forward(xm, lm, sm)
-                l = l1
-                s = s1
 
 
 class SAF(BASEM):

@@ -33,9 +33,9 @@ def main():
 
 # ここで出力を指定
     img_size = 112
-    file_id = "m09"
-    target_number = "0123456789"
-    num_each_class = 1000
+    file_id = "m69"
+    target_number = "6789"
+    num_each_class = 3000
     num_each_class_test = 50
 
     min_size = 20
@@ -46,7 +46,7 @@ def main():
     savedir = datadir + file_id + "/"
     f_log = open(savedir + 'log.txt', 'w')
     f_test = open(savedir + 'test.txt', 'w')
-    # f_train = open(savedir + 'train.txt', 'w')
+    f_train = open(savedir + 'train.txt', 'w')
 
     # sizeの分布を調べる
 #    count_size = np.zeros(100)
@@ -84,7 +84,7 @@ def main():
                     y = int(position[0][1] * img_size)
                     black[x:x + int(size[0]), y:y + int(size[0])] = afin(int(size[0]), 28, img1)
 
-                    mnist_id = mnist_label_index[target_combinations[i][1]][digit_id1]
+                    mnist_id = mnist_label_index[target_combinations[i][1]][digit_id2]
                     img2 = mnist.data[mnist_id].reshape(28, 28)
                     x = int(position[1][0] * img_size)
                     y = int(position[1][1] * img_size)

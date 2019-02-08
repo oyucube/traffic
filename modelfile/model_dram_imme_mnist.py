@@ -8,20 +8,20 @@ import chainer.functions as F
 from chainer import Variable
 import chainer.links as L
 from env import xp
-from modelfile.model_at import BASE
+from modelfile.model_dram import BASE
 import make_sampled_image
 import chainer
 
 
-class BASEM(BASE):
+class SAF(BASE):
     def __init__(self, n_units=128, n_out=0, img_size=112, var=0.18, wvar=0, n_step=2, gpu_id=-1):
         super(BASE, self).__init__(
             # the size of the inputs to each layer will be inferred
             # glimpse network
             # 切り取られた画像を処理する部分　位置情報 (glimpse loc)と画像特徴量の積を出力
-            glimpse_cnn_1=L.Convolution2D(1, 20, 5),  # in 20 out 16
-            glimpse_cnn_2=L.Convolution2D(20, 40, 5),  # in 16 out 12
-            glimpse_cnn_3=L.Convolution2D(40, 80, 5),  # in 12 out 8
+            glimpse_cnn_1=L.Convolution2D(1, 20, 5),  # in 28 out 24
+            glimpse_cnn_2=L.Convolution2D(20, 40, 5),  # in 24 out 20
+            glimpse_cnn_3=L.Convolution2D(40, 80, 5),  # in 20 out 16
             glimpse_full=L.Linear(8 * 8 * 80, n_units),
             glimpse_loc=L.Linear(2, n_units),
 
@@ -38,7 +38,6 @@ class BASEM(BASE):
 
             # 注意領域を選択するネットワーク
             attention_loc=L.Linear(n_units, 2),
-            attention_scale=L.Linear(n_units, 1),
 
             # 入力画像を処理するネットワーク
             context_cnn_1=L.Convolution2D(1, 2, 5),  # 56 to 52 pooling: 26
@@ -50,7 +49,7 @@ class BASEM(BASE):
             l_norm_cc3=L.BatchNormalization(2),
 
             class_full=L.Linear(n_units, n_out)
-            )
+        )
         #
         # img parameter
         #
@@ -73,6 +72,22 @@ class BASEM(BASE):
         self.r_recognize = 1.0
         self.n_step = n_step
 
+    def make_img(self, x, l, num_lm, random=0):
+        s = xp.log10(xp.ones((1, 1)) * self.gsize / self.img_size) + 1
+        sm = xp.repeat(s, num_lm, axis=0)
+
+        if random == 0:
+            lm = Variable(xp.clip(l.data, 0, 1))
+        else:
+            eps = xp.random.normal(0, 1, size=l.data.shape).astype(xp.float32)
+            lm = xp.clip(l.data + eps * xp.sqrt(self.vars), 0, 1)
+            lm = Variable(lm.astype(xp.float32))
+        if self.use_gpu:
+            xm = make_sampled_image.generate_xm_gpu(lm.data, sm, x, num_lm, g_size=self.gsize)
+        else:
+            xm = make_sampled_image.generate_xm(lm.data, sm, x, num_lm, g_size=self.gsize)
+        return xm, lm
+
     def first_forward(self, x, num_lm, test=False):
         self.rnn_1(Variable(xp.zeros((num_lm, self.n_unit)).astype(xp.float32)))
         h2 = F.relu(self.l_norm_cc1(self.context_cnn_1(F.max_pooling_2d(x, 2, stride=2))))
@@ -81,11 +96,10 @@ class BASEM(BASE):
         h5 = F.relu(self.rnn_2(h4))
 
         l = F.sigmoid(self.attention_loc(h5))
-        s = F.sigmoid(self.attention_scale(h5))
         b = F.sigmoid(self.baseline(Variable(h5.data)))
-        return l, s, b
+        return l, b
 
-    def recurrent_forward(self, xm, lm, sm, test=False):
+    def recurrent_forward(self, xm, lm, test=False):
         hgl = F.relu(self.glimpse_loc(lm))
         hg1 = F.relu(self.l_norm_c1(self.glimpse_cnn_1(Variable(xm))))
         hg2 = F.relu(self.l_norm_c2(self.glimpse_cnn_2(hg1)))
@@ -96,27 +110,12 @@ class BASEM(BASE):
         # ベクトルの積
         hr2 = F.relu(self.rnn_2(hr1))
         l = F.sigmoid(self.attention_loc(hr2))
-        s = F.sigmoid(self.attention_scale(hr2))
         y = F.softmax(self.class_full(hr1))
         b = F.sigmoid(self.baseline(Variable(hr2.data)))
-        return l, s, y, b
+        return l, y, b
 
-    def make_img(self, x, l, s, num_lm, random=0):
-        if random == 0:
-            lm = Variable(xp.clip(l.data, 0, 1))
-            sm = Variable(xp.clip(s.data, 0, 1))
-        else:
-            eps = xp.random.normal(0, 1, size=l.data.shape).astype(xp.float32)
-            epss = xp.random.normal(0, 1, size=s.data.shape).astype(xp.float32)
-            sm = xp.clip((s.data + xp.sqrt(self.vars) * epss), 0, 1).astype(xp.float32)
-            lm = xp.clip(l.data + xp.power(10, sm - 1) * eps * 2 * xp.sqrt(self.vars), 0, 1)
-            sm = Variable(sm)
-            lm = Variable(lm.astype(xp.float32))
-        if self.use_gpu:
-            xm = make_sampled_image.generate_xm_gpu(lm.data, sm.data, x, num_lm, g_size=self.gsize)
-        else:
-            xm = make_sampled_image.generate_xm(lm.data, sm.data, x, num_lm, g_size=self.gsize)
-        return xm, lm, sm
+    def set_b(self):
+        self.b_log = 0
 
     def __call__(self, x, target, bf=False):
         self.reset()
@@ -125,13 +124,14 @@ class BASEM(BASE):
         loss_func = 0
         if chainer.config.train:
             r_buf = 0
-            l, s, b = self.first_forward(x, num_lm)
+            l, b = self.first_forward(x, num_lm)
             for i in range(n_step):
                 if i + 1 == n_step:
-                    xm, lm, sm = self.make_img(x, l, s, num_lm, random=1)
-                    l1, s1, y, b1 = self.recurrent_forward(xm, lm, sm)
+                    xm, lm = self.make_img(x, l, num_lm, random=1)
+                    l1, y, b1 = self.recurrent_forward(xm, lm)
 
-                    loss, size_p = self.cul_loss(y, target, l, s, lm, sm)
+                    loss, size_p = self.cul_loss(y, target, l, lm)
+
                     loss_func += self.r_recognize * loss
                     r = xp.where(
                         xp.argmax(y.data, axis=1) == xp.argmax(target, axis=1), 1, 0).reshape((num_lm, 1)).astype(
@@ -142,10 +142,10 @@ class BASEM(BASE):
 
                     return loss_func / num_lm
                 else:
-                    xm, lm, sm = self.make_img(x, l, s, num_lm, random=1)
-                    l1, s1, y, b1 = self.recurrent_forward(xm, lm, sm)
-                    loss, size_p = self.cul_loss(y, target, l, s, lm, sm)
-                    loss_func += loss
+                    xm, lm = self.make_img(x, l, num_lm, random=1)
+                    l1, y, b1 = self.recurrent_forward(xm, lm)
+                    loss, size_p = self.cul_loss(y, target, l, lm)
+                    loss_func += self.r_recognize * loss
                     r = xp.where(
                         xp.argmax(y.data, axis=1) == xp.argmax(target, axis=1), 1, 0).reshape((num_lm, 1)).astype(
                         xp.float32)
@@ -153,27 +153,22 @@ class BASEM(BASE):
                     k = self.r * (r - b.data)  # calculate r
                     loss_func += F.sum(k * size_p)
                 l = l1
-                s = s1
                 b = b1
 
         else:
-            l, s, b1 = self.first_forward(x, num_lm)
+            l, b1 = self.first_forward(x, num_lm)
             for i in range(n_step):
                 if i + 1 == n_step:
                     if bf:
                         self.b_log += xp.sum(b1.data)
-                    xm, lm, sm = self.make_img(x, l, s, num_lm, random=0)
-                    l1, s1, y, b = self.recurrent_forward(xm, lm, sm)
+                    xm, lm = self.make_img(x, l, num_lm, random=0)
+                    l1, y, b = self.recurrent_forward(xm, lm)
                     accuracy = xp.sum(y.data * target)
                     if self.use_gpu:
                         accuracy = chainer.cuda.to_cpu(accuracy)
                     return accuracy
                 else:
-                    xm, lm, sm = self.make_img(x, l, s, num_lm, random=0)
-                    l1, s1, y, b = self.recurrent_forward(xm, lm, sm)
+                    xm, lm = self.make_img(x, l, num_lm, random=0)
+                    l1, y, b = self.recurrent_forward(xm, lm)
                 l = l1
-                s = s1
-
-
-class SAF(BASEM):
-    pass
+                b1 = b

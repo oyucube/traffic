@@ -14,7 +14,7 @@ import math
 
 
 class SAF(BASE):
-    def __init__(self, n_units=256, n_out=0, img_size=112, var=0.18, wvar=0, n_step=2, gpu_id=-1):
+    def __init__(self, n_units=128, n_out=0, img_size=112, var=0.18, wvar=0, n_step=2, gpu_id=-1):
         super(BASE, self).__init__(
             # the size of the inputs to each layer will be inferred
             # glimpse network
@@ -22,7 +22,7 @@ class SAF(BASE):
             glimpse_cnn_1=L.Convolution2D(1, 20, 5),  # in 28 out 24
             glimpse_cnn_2=L.Convolution2D(20, 40, 5),  # in 24 out 20
             glimpse_cnn_3=L.Convolution2D(40, 80, 5),  # in 20 out 16
-            glimpse_full=L.Linear(2 * 2 * 80, n_units),
+            glimpse_full=L.Linear(8 * 8 * 80, n_units),
             glimpse_loc=L.Linear(2, n_units),
 
             # baseline network 強化学習の期待値を学習し、バイアスbとする
@@ -58,7 +58,7 @@ class SAF(BASE):
         else:
             self.use_gpu = False
         self.img_size = img_size
-        self.gsize = 24
+        self.gsize = 20
         self.train = True
         self.var = var
         if wvar == 0:
@@ -99,7 +99,7 @@ class SAF(BASE):
         b = F.sigmoid(self.baseline(Variable(h5.data)))
         return l, b
 
-    def recurrent_forward(self, xm, lm, sm, test=False):
+    def recurrent_forward(self, xm, lm, test=False):
         hgl = F.relu(self.glimpse_loc(lm))
         hg1 = F.relu(self.l_norm_c1(self.glimpse_cnn_1(Variable(xm))))
         hg2 = F.relu(self.l_norm_c2(self.glimpse_cnn_2(hg1)))
